@@ -8,6 +8,7 @@ import { storageService } from "@/services/storage";
 import { Tournament } from "@/types/tournament";
 import { ArrowRight, Calendar, Plus, Users } from "lucide-react";
 import Link from "next/link";
+import { ModeToggle } from "@/components/toggle/theme";
 
 export default function Home() {
   const router = useRouter();
@@ -26,12 +27,15 @@ export default function Home() {
     <main className="container mx-auto p-4">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-4xl font-bold">Torneios</h1>
-        <Link href="/tournaments/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Torneio
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <ModeToggle />
+          <Link href="/tournaments/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Torneio
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
