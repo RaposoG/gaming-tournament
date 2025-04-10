@@ -61,7 +61,7 @@ export default function Home() {
         {tournaments.length === 0 && (
           <div className="col-span-full text-center py-12">
             <h2 className="text-2xl font-semibold text-gray-600 mb-2">Nenhum torneio encontrado</h2>
-            <p className="text-gray-500">Crie seu primeiro torneio clicando no botão "Novo Torneio"</p>
+            <p className="text-gray-500">Crie seu primeiro torneio clicando no botão &quot;Novo Torneio&quot;</p>
           </div>
         )}
       </div>
