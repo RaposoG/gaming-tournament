@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { storageService } from "@/services/storage";
-import { Tournament, Team, Match } from "@/types/tournament";
+import { Tournament, Team } from "@/types/tournament";
 import { PlusCircle, ArrowLeft, Users, Calendar, Flag } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
