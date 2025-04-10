@@ -16,14 +16,11 @@ export default function NewMatch({ params }: { params: Promise<{ id: string }> }
   const router = useRouter();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [formData, setFormData] = useState({
-    homeTeamId: "",
-    awayTeamId: "",
+    homePlayerId: "",
+    awayPlayerId: "",
     date: "",
     time: "",
   });
-  const [homeTeamPlayers, setHomeTeamPlayers] = useState<string[]>([]);
-  const [awayTeamPlayers, setAwayTeamPlayers] = useState<string[]>([]);
-  const [availablePlayers, setAvailablePlayers] = useState<string[]>([]);
   const resolvedParams = use(params);
 
   useEffect(() => {
@@ -37,26 +34,7 @@ export default function NewMatch({ params }: { params: Promise<{ id: string }> }
     }
 
     setTournament(foundTournament);
-    setAvailablePlayers(foundTournament.players);
   }, [resolvedParams.id, router]);
-
-  const handleAddPlayerToTeam = (player: string, team: "home" | "away") => {
-    if (team === "home") {
-      setHomeTeamPlayers([...homeTeamPlayers, player]);
-    } else {
-      setAwayTeamPlayers([...awayTeamPlayers, player]);
-    }
-    setAvailablePlayers(availablePlayers.filter((p) => p !== player));
-  };
-
-  const handleRemovePlayerFromTeam = (player: string, team: "home" | "away") => {
-    if (team === "home") {
-      setHomeTeamPlayers(homeTeamPlayers.filter((p) => p !== player));
-    } else {
-      setAwayTeamPlayers(awayTeamPlayers.filter((p) => p !== player));
-    }
-    setAvailablePlayers([...availablePlayers, player]);
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,16 +44,29 @@ export default function NewMatch({ params }: { params: Promise<{ id: string }> }
       return;
     }
 
-    if (homeTeamPlayers.length === 0 || awayTeamPlayers.length === 0) {
-      toast.error("Por favor, selecione os jogadores para ambos os times");
+    if (!formData.homePlayerId || !formData.awayPlayerId) {
+      toast.error("Por favor, selecione os jogadores para o jogo");
+      return;
+    }
+
+    if (formData.homePlayerId === formData.awayPlayerId) {
+      toast.error("Os jogadores não podem ser iguais");
+      return;
+    }
+
+    const homePlayer = tournament!.players.find((p) => p === formData.homePlayerId);
+    const awayPlayer = tournament!.players.find((p) => p === formData.awayPlayerId);
+
+    if (!homePlayer || !awayPlayer) {
+      toast.error("Jogadores não encontrados");
       return;
     }
 
     const homeTeam: Team = {
       id: crypto.randomUUID(),
-      name: `Time ${homeTeamPlayers.join(", ")}`,
+      name: homePlayer,
       game: tournament!.game,
-      players: homeTeamPlayers,
+      players: [homePlayer],
       points: 0,
       wins: 0,
       draws: 0,
@@ -86,9 +77,9 @@ export default function NewMatch({ params }: { params: Promise<{ id: string }> }
 
     const awayTeam: Team = {
       id: crypto.randomUUID(),
-      name: `Time ${awayTeamPlayers.join(", ")}`,
+      name: awayPlayer,
       game: tournament!.game,
-      players: awayTeamPlayers,
+      players: [awayPlayer],
       points: 0,
       wins: 0,
       draws: 0,
@@ -160,39 +151,24 @@ export default function NewMatch({ params }: { params: Promise<{ id: string }> }
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    Time da Casa
+                    Jogador 1
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Jogadores Disponíveis</label>
-                      <Select onValueChange={(value) => handleAddPlayerToTeam(value, "home")}>
+                      <Select value={formData.homePlayerId} onValueChange={(value) => setFormData({ ...formData, homePlayerId: value })}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione um jogador" />
                         </SelectTrigger>
                         <SelectContent>
-                          {availablePlayers.map((player) => (
+                          {tournament.players.map((player) => (
                             <SelectItem key={player} value={player}>
                               {player}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Jogadores Selecionados</label>
-                      <div className="space-y-2">
-                        {homeTeamPlayers.map((player) => (
-                          <div key={player} className="flex items-center justify-between p-2 bg-gray-100 rounded-md">
-                            <span>{player}</span>
-                            <Button type="button" variant="ghost" size="sm" onClick={() => handleRemovePlayerFromTeam(player, "home")}>
-                              Remover
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -202,39 +178,24 @@ export default function NewMatch({ params }: { params: Promise<{ id: string }> }
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    Time Visitante
+                    Jogador 2
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Jogadores Disponíveis</label>
-                      <Select onValueChange={(value) => handleAddPlayerToTeam(value, "away")}>
+                      <Select value={formData.awayPlayerId} onValueChange={(value) => setFormData({ ...formData, awayPlayerId: value })}>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione um jogador" />
                         </SelectTrigger>
                         <SelectContent>
-                          {availablePlayers.map((player) => (
+                          {tournament.players.map((player) => (
                             <SelectItem key={player} value={player}>
                               {player}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Jogadores Selecionados</label>
-                      <div className="space-y-2">
-                        {awayTeamPlayers.map((player) => (
-                          <div key={player} className="flex items-center justify-between p-2 bg-gray-100 rounded-md">
-                            <span>{player}</span>
-                            <Button type="button" variant="ghost" size="sm" onClick={() => handleRemovePlayerFromTeam(player, "away")}>
-                              Remover
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   </div>
                 </CardContent>
