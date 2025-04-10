@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { storageService } from "@/services/storage";
 import { Tournament, Team } from "@/types/tournament";
-import { PlusCircle, ArrowLeft, Users, Calendar, Flag } from "lucide-react";
+import { ArrowLeft, Calendar, Flag, PlusCircle, Users } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { use } from "react";
@@ -38,8 +38,8 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
   }, [resolvedParams.id, router, searchParams]);
 
   const calculateStandings = (tournament: Tournament) => {
-    // Criar um mapa de jogadores para estatísticas
-    const playerStats = new Map<
+    // Criar um objeto para armazenar as estatísticas dos jogadores
+    const playerStatsObj: Record<
       string,
       {
         name: string;
@@ -50,11 +50,11 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
         draws: number;
         losses: number;
       }
-    >();
+    > = {};
 
     // Inicializar estatísticas para todos os jogadores
     tournament.players.forEach((player) => {
-      playerStats.set(player, {
+      playerStatsObj[player] = {
         name: player,
         points: 0,
         goalsFor: 0,
@@ -62,7 +62,7 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
         wins: 0,
         draws: 0,
         losses: 0,
-      });
+      };
     });
 
     // Calcular estatísticas com base nos jogos
@@ -71,8 +71,8 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
         const homePlayer = match.homeTeam.players[0];
         const awayPlayer = match.awayTeam.players[0];
 
-        const homeStats = playerStats.get(homePlayer);
-        const awayStats = playerStats.get(awayPlayer);
+        const homeStats = playerStatsObj[homePlayer];
+        const awayStats = playerStatsObj[awayPlayer];
 
         if (homeStats && awayStats) {
           homeStats.goalsFor += match.homeScore;
@@ -95,7 +95,7 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
     });
 
     // Calcular pontos e ordenar
-    const standings = Array.from(playerStats.values()).map((stats) => ({
+    const standings = Object.values(playerStatsObj).map((stats) => ({
       ...stats,
       points: stats.wins * 3 + stats.draws,
     }));
@@ -173,7 +173,7 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
               </TableHeader>
               <TableBody>
                 {standings.map((team, index) => (
-                  <TableRow key={team.id}>
+                  <TableRow key={team.name}>
                     <TableCell>{index + 1}º</TableCell>
                     <TableCell>{team.name}</TableCell>
                     <TableCell className="text-center">{team.points}</TableCell>
@@ -200,8 +200,8 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {tournament.players.map((player) => (
-                <div key={player} className="p-2 bg-gray-100 rounded-md">
+              {tournament.players.map((player, index) => (
+                <div key={`${player}-${index}`} className="p-2 bg-muted rounded-md">
                   {player}
                 </div>
               ))}
@@ -231,7 +231,7 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
                   <div className="flex-1 text-right">{match.homeTeam.players[0]}</div>
                   <div className="px-4 font-bold">{match.status === "completed" ? `${match.homeScore} - ${match.awayScore}` : "VS"}</div>
                   <div className="flex-1 text-left">{match.awayTeam.players[0]}</div>
-                  <div className="ml-4 text-sm text-gray-500">
+                  <div className="ml-4 text-sm text-muted-foreground">
                     {new Date(match.date).toLocaleDateString()} {match.time}
                   </div>
                   {match.status === "pending" && tournament.status !== "completed" && (
@@ -242,7 +242,7 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
                 </div>
               ))}
 
-              {tournament.matches.length === 0 && <div className="text-center py-8 text-gray-500">Nenhum jogo registrado</div>}
+              {tournament.matches.length === 0 && <div className="text-center py-8 text-muted-foreground">Nenhum jogo registrado</div>}
             </div>
           </CardContent>
         </Card>
