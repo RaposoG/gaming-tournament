@@ -86,7 +86,7 @@ export default function FinalizeMatch({ params }: { params: Promise<{ id: string
         homeScore,
         awayScore,
         status: "completed",
-        winnerId,
+        winnerId: winnerId!,
       };
 
       // Atualiza o território alvo com o novo dono
