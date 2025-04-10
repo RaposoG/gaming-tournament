@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,61 +14,93 @@ import { use } from "react";
 
 export default function TournamentDetails({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [standings, setStandings] = useState<Team[]>([]);
   const resolvedParams = use(params);
 
   useEffect(() => {
-    const tournaments = storageService.getTournaments();
-    const foundTournament = tournaments.find((t) => t.id === resolvedParams.id);
+    const loadTournamentData = () => {
+      const tournaments = storageService.getTournaments();
+      const foundTournament = tournaments.find((t) => t.id === resolvedParams.id);
 
-    if (!foundTournament) {
-      toast.error("Torneio não encontrado");
-      router.push("/");
-      return;
-    }
+      if (!foundTournament) {
+        toast.error("Torneio não encontrado");
+        router.push("/");
+        return;
+      }
 
-    setTournament(foundTournament);
-    calculateStandings(foundTournament);
-  }, [resolvedParams.id, router]);
+      setTournament(foundTournament);
+      calculateStandings(foundTournament);
+    };
+
+    loadTournamentData();
+  }, [resolvedParams.id, router, searchParams]);
 
   const calculateStandings = (tournament: Tournament) => {
-    const teamsWithStats = tournament.teams.map((team) => ({
-      ...team,
-      points: team.wins * 3 + team.draws,
-      goalsFor: 0,
-      goalsAgainst: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-    }));
+    // Criar um mapa de jogadores para estatísticas
+    const playerStats = new Map<
+      string,
+      {
+        name: string;
+        points: number;
+        goalsFor: number;
+        goalsAgainst: number;
+        wins: number;
+        draws: number;
+        losses: number;
+      }
+    >();
 
+    // Inicializar estatísticas para todos os jogadores
+    tournament.players.forEach((player) => {
+      playerStats.set(player, {
+        name: player,
+        points: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+      });
+    });
+
+    // Calcular estatísticas com base nos jogos
     tournament.matches.forEach((match) => {
       if (match.status === "completed") {
-        const homeTeam = teamsWithStats.find((t) => t.id === match.homeTeam.id);
-        const awayTeam = teamsWithStats.find((t) => t.id === match.awayTeam.id);
+        const homePlayer = match.homeTeam.players[0];
+        const awayPlayer = match.awayTeam.players[0];
 
-        if (homeTeam && awayTeam) {
-          homeTeam.goalsFor += match.homeScore;
-          homeTeam.goalsAgainst += match.awayScore;
-          awayTeam.goalsFor += match.awayScore;
-          awayTeam.goalsAgainst += match.homeScore;
+        const homeStats = playerStats.get(homePlayer);
+        const awayStats = playerStats.get(awayPlayer);
+
+        if (homeStats && awayStats) {
+          homeStats.goalsFor += match.homeScore;
+          homeStats.goalsAgainst += match.awayScore;
+          awayStats.goalsFor += match.awayScore;
+          awayStats.goalsAgainst += match.homeScore;
 
           if (match.homeScore > match.awayScore) {
-            homeTeam.wins++;
-            awayTeam.losses++;
+            homeStats.wins++;
+            awayStats.losses++;
           } else if (match.homeScore < match.awayScore) {
-            awayTeam.wins++;
-            homeTeam.losses++;
+            awayStats.wins++;
+            homeStats.losses++;
           } else {
-            homeTeam.draws++;
-            awayTeam.draws++;
+            homeStats.draws++;
+            awayStats.draws++;
           }
         }
       }
     });
 
-    const sortedStandings = teamsWithStats.sort((a, b) => {
+    // Calcular pontos e ordenar
+    const standings = Array.from(playerStats.values()).map((stats) => ({
+      ...stats,
+      points: stats.wins * 3 + stats.draws,
+    }));
+
+    const sortedStandings = standings.sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       const aGD = a.goalsFor - a.goalsAgainst;
       const bGD = b.goalsFor - b.goalsAgainst;
@@ -196,9 +228,9 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
             <div className="space-y-4">
               {tournament.matches.map((match) => (
                 <div key={match.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1 text-right">{match.homeTeam.name}</div>
+                  <div className="flex-1 text-right">{match.homeTeam.players[0]}</div>
                   <div className="px-4 font-bold">{match.status === "completed" ? `${match.homeScore} - ${match.awayScore}` : "VS"}</div>
-                  <div className="flex-1 text-left">{match.awayTeam.name}</div>
+                  <div className="flex-1 text-left">{match.awayTeam.players[0]}</div>
                   <div className="ml-4 text-sm text-gray-500">
                     {new Date(match.date).toLocaleDateString()} {match.time}
                   </div>
