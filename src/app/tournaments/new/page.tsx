@@ -51,7 +51,13 @@ export default function NewTournament() {
       name,
       players: validPlayers,
       matches: [],
-      status: "in_progress",
+      status: "ongoing",
+      game: "standard",
+      teams: [],
+      startDate: new Date().toISOString().split("T")[0],
+      maxPlayers: 16,
+      scheduleType: "manual",
+      type: "standard",
     };
 
     storageService.saveTournament(tournament);
