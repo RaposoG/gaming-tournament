@@ -94,11 +94,22 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
       }
     });
 
-    // Calcular pontos e ordenar
-    const standings = Object.values(playerStatsObj).map((stats) => ({
-      ...stats,
-      points: stats.wins * 3 + stats.draws,
-    }));
+    // Calcular pontos e criar objetos Team
+    const standings = Object.values(playerStatsObj).map((stats) => {
+      const points = stats.wins * 3 + stats.draws;
+      return {
+        id: crypto.randomUUID(),
+        name: stats.name,
+        game: tournament.game,
+        players: [stats.name],
+        points: points,
+        wins: stats.wins,
+        draws: stats.draws,
+        losses: stats.losses,
+        goalsFor: stats.goalsFor,
+        goalsAgainst: stats.goalsAgainst,
+      } as Team;
+    });
 
     const sortedStandings = standings.sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
