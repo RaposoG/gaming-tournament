@@ -43,6 +43,8 @@ export interface GeopoliticalMatch {
   attackerTerritoryId: string; // ID do território de origem do ataque
   defenderTerritoryId: string; // ID do território alvo do ataque
   winnerId?: string; // ID do jogador vencedor
+  homeScore?: number; // Pontuação do atacante
+  awayScore?: number; // Pontuação do defensor
   date: string;
   time: string;
   status: "pending" | "completed";
