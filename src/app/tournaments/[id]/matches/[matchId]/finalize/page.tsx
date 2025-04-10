@@ -80,7 +80,11 @@ export default function FinalizeMatch({ params }: { params: Promise<{ id: string
     // Save the updated tournament
     storageService.saveTournament(updatedTournament);
     toast.success("Jogo finalizado com sucesso!");
-    router.push(`/tournaments/${resolvedParams.id}`);
+
+    // Forçar atualização da página de detalhes
+    setTimeout(() => {
+      router.push(`/tournaments/${resolvedParams.id}?t=${Date.now()}`);
+    }, 500);
   };
 
   if (!tournament || !match) {
