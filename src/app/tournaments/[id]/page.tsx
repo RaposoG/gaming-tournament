@@ -11,6 +11,9 @@ import { ArrowLeft, Calendar, Flag, PlusCircle, Users } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { use } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function TournamentDetails({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -18,6 +21,8 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
   const [tournament, setTournament] = useState<Tournament | null>(null);
   const [standings, setStandings] = useState<Team[]>([]);
   const resolvedParams = use(params);
+  const [isAddPlayerModalOpen, setIsAddPlayerModalOpen] = useState(false);
+  const [newPlayerName, setNewPlayerName] = useState("");
 
   useEffect(() => {
     const loadTournamentData = () => {
@@ -141,6 +146,39 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
     router.push(`/tournaments/${resolvedParams.id}/matches/${matchId}/finalize`);
   };
 
+  const handleAddPlayer = () => {
+    if (!tournament || !newPlayerName.trim()) return;
+
+    // Verificar se o jogador já existe
+    if (tournament.players.includes(newPlayerName.trim())) {
+      toast.error("Este jogador já está no torneio");
+      return;
+    }
+
+    // Verificar se o torneio já atingiu o número máximo de jogadores
+    if (tournament.players.length >= tournament.maxPlayers) {
+      toast.error(`O torneio já atingiu o número máximo de ${tournament.maxPlayers} jogadores`);
+      return;
+    }
+
+    // Adicionar o novo jogador
+    const updatedTournament = {
+      ...tournament,
+      players: [...tournament.players, newPlayerName.trim()],
+    };
+
+    // Salvar o torneio atualizado
+    storageService.saveTournament(updatedTournament);
+    setTournament(updatedTournament);
+    calculateStandings(updatedTournament);
+
+    // Limpar o formulário e fechar o modal
+    setNewPlayerName("");
+    setIsAddPlayerModalOpen(false);
+
+    toast.success(`Jogador ${newPlayerName.trim()} adicionado com sucesso!`);
+  };
+
   if (!tournament) {
     return null;
   }
@@ -203,11 +241,17 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Jogadores
+              Jogadores ({tournament.players.length}/{tournament.maxPlayers})
             </CardTitle>
+            {tournament.status !== "completed" && tournament.players.length < tournament.maxPlayers && (
+              <Button variant="outline" size="sm" onClick={() => setIsAddPlayerModalOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Adicionar Jogador
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -258,6 +302,27 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal para adicionar novo jogador */}
+      <Dialog open={isAddPlayerModalOpen} onOpenChange={setIsAddPlayerModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Jogador</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <Label htmlFor="playerName">Nome do Jogador</Label>
+              <Input id="playerName" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} placeholder="Digite o nome do jogador" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddPlayerModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleAddPlayer}>Adicionar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
