@@ -155,12 +155,6 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
       return;
     }
 
-    // Verificar se o torneio já atingiu o número máximo de jogadores
-    if (tournament.players.length >= tournament.maxPlayers) {
-      toast.error(`O torneio já atingiu o número máximo de ${tournament.maxPlayers} jogadores`);
-      return;
-    }
-
     // Adicionar o novo jogador
     const updatedTournament = {
       ...tournament,
@@ -244,9 +238,9 @@ export default function TournamentDetails({ params }: { params: Promise<{ id: st
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Jogadores ({tournament.players.length}/{tournament.maxPlayers})
+              Jogadores ({tournament.players.length})
             </CardTitle>
-            {tournament.status !== "completed" && tournament.players.length < tournament.maxPlayers && (
+            {tournament.status !== "completed" && (
               <Button variant="outline" size="sm" onClick={() => setIsAddPlayerModalOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Jogador

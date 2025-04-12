@@ -55,7 +55,7 @@ export default function NewTournament() {
       game: "standard",
       teams: [],
       startDate: new Date().toISOString().split("T")[0],
-      maxPlayers: 16,
+      maxPlayers: 9999,
       scheduleType: "manual",
       type: "standard",
     };
